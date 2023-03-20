@@ -44,7 +44,7 @@ def problem4 (A, i):
     return A[i].sum()
 
 def problem5 (A, c, d):
-    return np.mean((A >= c) & (A <= d))
+    return np.mean(A[(A>=c) & (A<=d)])
 
 def problem6 (A, k):
     if k <= len(A):
