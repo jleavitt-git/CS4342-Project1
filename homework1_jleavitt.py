@@ -50,9 +50,7 @@ def problem6 (A, k):
     if k <= len(A):
         vals, vects = np.linalg.eig(A)
         maxIndexes = np.argpartition(vals, -k)[-k:]
-        maxVectors = np.zeros(shape=(k, len(A)))
-        for i in range(len(maxIndexes)):
-            maxVectors[i] = vects[:,maxIndexes[i]]
+        maxVectors = vects[:,maxIndexes]
         return maxVectors
     else:
         return ("Impossible")
@@ -74,7 +72,7 @@ def problem10 (A):
 
 def main():
     A = np.array([[1,2,3],[2,3,4],[3,4,5]])
-    print(problem7(A,3))
+    print(problem6(A,2))
 
 if __name__ == "__main__":
     main()
