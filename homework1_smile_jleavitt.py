@@ -1,29 +1,54 @@
 import numpy as np
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
+import time
 
 def fPC (y, yhat):
     #Return the average of time the prediction was accurate 
     return np.mean(y == yhat)
 
 def measureAccuracyOfPredictors (predictors, X, y):
-    pass
+    total = np.zeros(len(X))
+    for p in predictors:
+        r1,c1,r2,c2 = p
+        
+        #get difference
+        diff = X[:, r1, c1] - X[:,r2,c2]
+        #Convert to bool 0 or 1
+        boolDiff = 1 * (diff > 0)
+        total += boolDiff
+    #Find prediction
+    yhat = 1 * (total/len(predictors) > 0.5)
+    return fPC(y, yhat)
 
 def stepwiseRegression (trainingFaces, trainingLabels, testingFaces, testingLabels):
-    show = True
-    if show:
-        # Show an arbitrary test image in grayscale
-        im = testingFaces[0,:,:]
-        fig,ax = plt.subplots(1)
-        ax.imshow(im, cmap='gray')
-        # Show r1,c1
-        rect = patches.Rectangle((c1 - 0.5, r1 - 0.5), 1, 1, linewidth=2, edgecolor='r', facecolor='none')
-        ax.add_patch(rect)
-        # Show r2,c2
-        rect = patches.Rectangle((c2 - 0.5, r2 - 0.5), 1, 1, linewidth=2, edgecolor='b', facecolor='none')
-        ax.add_patch(rect)
-        # Display the merged result
-        plt.show()
+
+    imageSize = 24
+    predictors = []
+
+    for i in range(6): #get 6 predictors
+        bestPredictor = 0
+        bestLocation = 0
+        for r1 in range(imageSize):
+            for c1 in range(imageSize):
+                for r2 in range(imageSize):
+                    for c2 in range(imageSize):
+
+                        pix = (r1,c1,r2,c2)
+
+                        if r1 == r2 and c1 == c2 or pix in predictors:
+                            #Same pixel or already in predictors
+                            continue
+
+                        predictorAccuracy = measureAccuracyOfPredictors(predictors + list((pix,)), trainingFaces, trainingLabels)
+
+                        if predictorAccuracy > bestPredictor:
+                            bestPredictor = predictorAccuracy
+                            bestLocation =  pix
+        predictors.append(bestLocation)
+
+    return predictors
+
 
 def loadData (which):
     faces = np.load("{}ingFaces.npy".format(which))
@@ -34,6 +59,15 @@ def loadData (which):
 if __name__ == "__main__":
     testingFaces, testingLabels = loadData("test")
     trainingFaces, trainingLabels = loadData("train")
-    stepwiseRegression(trainingFaces, trainingLabels, testingFaces, testingLabels)
+    run = [400, 600, 800, 1000, 1200, 1600, 2000]
+    print(f"[n]  |Training Accuracy|Test Accuracy|Time to execute (seconds)")
+    for r in run:
+        startTime = time.time()
+        sampleLabels = trainingLabels[:r]
+        sampleFaces = trainingFaces[:r, :, :]
+        finalPredictors = stepwiseRegression(sampleFaces, sampleLabels, testingFaces, testingLabels)
 
+        trainAcc = measureAccuracyOfPredictors(finalPredictors, sampleFaces, sampleLabels)
+        testAcc = measureAccuracyOfPredictors(finalPredictors, testingFaces, testingLabels)
 
+        print(f"{r}| {trainAcc}         | {testAcc}  | {time.time()-startTime}")
